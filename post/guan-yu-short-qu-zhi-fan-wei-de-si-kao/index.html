@@ -1,0 +1,227 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>关于byte取值范围的思考 | 骆子豪の个人小站</title>
+<link rel="shortcut icon" href="https://minibreak7.github.io/favicon.ico?v=1679491170459">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://minibreak7.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="关于byte取值范围的思考 | 骆子豪の个人小站 - Atom Feed" href="https://minibreak7.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="我们都知道在java中，byte占一个字节，一个字节由8位二进制数组成，首位为符号位，则取到的正数最大值是 0111 1111 ，转换成十进制就是127，相反取到的负数最大值是 1111 1111 ，转换成十进制就是-127。但是byte实..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://minibreak7.github.io">
+  <img class="avatar" src="https://minibreak7.github.io/images/avatar.png?v=1679491170459" alt="">
+  </a>
+  <h1 class="site-title">
+    骆子豪の个人小站
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/Forlondon" target="_blank">
+          <i class="ri-github-line"></i>
+        </a>
+      
+    
+      
+    
+      
+        <a href="https://weibo.com/u/1881590487" target="_blank">
+          <i class="ri-weibo-line"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              关于byte取值范围的思考
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-10-27
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <p>我们都知道在java中，byte占一个字节，一个字节由8位二进制数组成，首位为符号位，则取到的正数最大值是 <code>0111 1111</code> ，转换成十进制就是127，相反取到的负数最大值是 <code>1111 1111</code> ，转换成十进制就是-127。但是byte实际的取值范围是 [-128, 127]，由此引发了我的思考。</p>
+<p>首先我们需要明确几个概念</p>
+<p>原码：符号位加上数值的绝对值, 即用第一位表示符号, 其余位表示值</p>
+<p>反码：正数的反码是其本身；负数的反码是在其原码的基础上，符号位不变，其余各个位取反</p>
+<p>补码：正数的补码是其本身；负数的补码是在其原码的基础上，符号位不变，其余各位取反，最后+1（即在反码的基础上+1）</p>
+<p>举例：</p>
+<pre><code class="language-bash">[+1] = [00000001]原 = [00000001]反 = [00000001]补
+[-1] = [10000001]原 = [11111110]反 = [11111111]补
+</code></pre>
+<p>在计算机中使用的是补码对数据进行存储和计算</p>
+<p>接下来我们需要思考为何要使用原码，反码和补码</p>
+<p>对于计算机，加减乘数已经是最基础的运算，要设计得尽量简单. 计算机辨别符号位显然会让计算机的基础电路设计变得十分复杂，于是人们想出了将符号位也参与运算的方法。根据运算法则减去一个正数等于加上一个负数，即: 1-1 = 1 + (-1) = 0 , 所以机器可以只有加法而没有减法, 这样计算机运算的设计就更简单了。</p>
+<p>对于原码：</p>
+<pre><code class="language-bash">1 - 1 = 1 + (-1) = [00000001]原 + [10000001]原 = [10000010]原 = -2
+</code></pre>
+<p>如果用原码表示，让符号位也参与计算，对于减法来说，结果是不正确的。这也就是为何计算机内部不使用原码表示一个数</p>
+<p>为了解决原码做减法的问题，出现了反码，对于反码：</p>
+<pre><code class="language-bash">1 - 1 = 1 + (-1) = [0000 0001]原 + [1000 0001]原= [0000 0001]反 + [1111 1110]反 = [1111 1111]反 = [1000 0000]原 = -0
+</code></pre>
+<p>发现用反码计算减法，结果的绝对值是正确的，而唯一的问题其实就出现在 0 这个特殊的数值上。虽然人们理解上+0和-0是一样的，但是0带符号是没有任何意义的。而且会有 [0000 0000]原 和 [1000 0000]原 两个编码表示0。</p>
+<p>补码的出现，解决了0的符号以及两个编码的问题，对于补码：</p>
+<pre><code class="language-bash">1-1 = 1 + (-1) = [0000 0001]原 + [1000 0001]原 = [0000 0001]补 + [1111 1111]补 = [0000 0000]补=[0000 0000]原
+</code></pre>
+<p>这样0用[0000 0000]表示, 而以前出现问题的-0则不存在了，而且可以用[1000 0000]表示-128，这也是byte能取到-128的原因。</p>
+<pre><code class="language-bash">(-1) + (-127) = [1000 0001]原 + [1111 1111]原 = [1111 1111]补 + [1000 0001]补 = [1000 0000]补
+</code></pre>
+<p>-1-127的结果应该是-128，在用补码运算的结果中，[1000 0000]补 就是-128。</p>
+<p>但是注意因为实际上是使用以前的-0的补码来表示-128，所以-128并没有原码和反码表示（对-128的补码表示[1000 0000]补算出来的原码是[0000 0000]原, 这是不正确的）</p>
+<p>使用补码，不仅仅修复了0的符号以及存在两个编码的问题，而且还能够多表示一个最低数。这就是为什么8位二进制，使用原码或反码表示的范围为[-127, +127]，而使用补码表示的范围为[-128, 127]</p>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://minibreak7.github.io/post/hello-myblog/">
+              <h3 class="post-title">
+                Hello myBlog
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: 'fd61c2c2d8d5cf8d5407',
+    clientSecret: '2022f2399cab18a4eb665d351eb5810db693657b',
+    repo: 'minibreak7.github.io',
+    owner: 'minibreak7',
+    admin: ['minibreak7'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://minibreak7.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
